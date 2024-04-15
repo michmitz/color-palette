@@ -20,11 +20,12 @@ export type SchemeType = (typeof schemeTypes)[number];
 export const ColorSchemeContainer: React.FC = () => {
   const [colorInput, setColorInput] = React.useState<string>("");
   const [colorData, setColorData] = React.useState<any>(null);
-  const [gradientData, setGradientData] = React.useState<any>([]);
+  // const [gradientData, setGradientData] = React.useState<any>([]);
   const [format, setFormat] = React.useState<ColorFormat>("rgb");
   const [dropdownValue, setDropdownValue] = React.useState<SchemeType | null>(
     null
   );
+  const [colorSchemes, setColorSchemes] = React.useState<any>([]);
 
   const getData = async (
     hexColor: string,
@@ -49,7 +50,7 @@ export const ColorSchemeContainer: React.FC = () => {
       setColorData(null);
       getData(
         colorInput.substring(1),
-        10,
+        6,
         dropdownValue || "analogic-complement",
         (v) => setColorData(v)
       );
@@ -59,7 +60,7 @@ export const ColorSchemeContainer: React.FC = () => {
 
   React.useEffect(() => {
     if (dropdownValue && colorInput) {
-      getData(colorInput.substring(1), 10, dropdownValue, (v) =>
+      getData(colorInput.substring(1), 6, dropdownValue, (v) =>
         setColorData(v)
       );
     }
@@ -67,20 +68,38 @@ export const ColorSchemeContainer: React.FC = () => {
   }, [dropdownValue]);
 
   React.useEffect(() => {
+    // If six colors are fetched from color input
     if (colorData !== null) {
+      console.log("color data", colorData);
       colorData.colors.forEach((color: any) => {
-        getData(color.hex.clean, 4, "analogic", (v) =>
-          setGradientData((prevData: any) => [
-            ...prevData,
-            { baseColor: color, color2: v.colors[1], color3: v.colors[3] },
-          ])
+        // For each color fetched from color input, generate a new color scheme of 5 colors
+        getData(color.hex.clean, 5, dropdownValue || "monochrome", (v) =>
+          setColorSchemes((prevData: any) => [...prevData, v])
         );
+
+        // Todo: Add gradients
+        // const gradients = chroma.scale([`${colorInput}`, `${color.hex.value}`]).colors(3);
+
+        // getData(color.hex.clean, 4, "analogic", (v) =>
+        // setGradientData((prevData: any) => [
+        //   ...prevData,
+        //   [ gradients[0], gradients[1], gradients[2] ],
+        // ])
+        // );
       });
     }
-  }, [colorData]);
+  }, [colorData, colorInput, dropdownValue]);
+
+  React.useEffect(() => {
+    console.log("Color schemes", colorSchemes);
+    colorSchemes.length &&
+      colorSchemes.forEach((scheme: any) => {
+        console.log("scheme", scheme);
+      });
+  }, [colorSchemes]);
 
   const handleSetColorInput = (v: string) => {
-    setGradientData([]);
+    // setGradientData([]);
     setColorInput(v);
   };
 
@@ -90,12 +109,12 @@ export const ColorSchemeContainer: React.FC = () => {
 
   const handleSetDropdownValue = (v: SchemeType) => {
     setColorData(null);
-    setGradientData([]);
+    // setGradientData([]);
     setDropdownValue(v);
   };
 
   const FormatButton = styled.button<{ $selected: boolean }>`
-    color: ${(props) => (props.$selected ? "purple" : "black")};
+    color: ${(props) => (props.$selected ? "green" : "black")};
     margin: 3px;
   `;
 
@@ -136,13 +155,82 @@ export const ColorSchemeContainer: React.FC = () => {
         </div>
       </div>
 
-      {gradientData.length ? (
-        <ColorScheme colors={gradientData} format={format} />
+      <div style={{ display: "flex", flexDirection: 'column', alignItems: 'center' }}>
+        <div
+          style={{ display: "flex", flexDirection: "row", flexWrap: "wrap" }}
+        >
+          {colorData &&
+            colorData.colors.map((color: any, i: number) => {
+              return (
+                <div
+                  style={{
+                    backgroundColor: color.hex.value,
+                    width: "100px",
+                    height: "100px",
+                    display: "flex",
+                    flexDirection: "row",
+                  }}
+                  key={`${color}-${i}`}
+                />
+              );
+            })}
+        </div>
+
+        <div
+          style={{ display: "flex", flexDirection: "row", flexWrap: "wrap", alignSelf: 'center', marginTop: '20px', justifyContent: 'space-between', width: '80%' }}
+        >
+          {colorSchemes.length ? (
+            colorSchemes.map((scheme: any, i: number) => {
+              return (
+                <div
+                  style={{
+                    backgroundColor: "white",
+                    width: "400px",
+                    height: "280px",
+                    display: "flex",
+                    flexDirection: "row",
+                    justifyContent: "space-around",
+                    borderRadius: "10px",
+                    boxShadow: "8px 8px 8px lightgray",
+                  }}
+                  key={`${scheme}-${i}`}
+                >
+                  {scheme.colors.map((color: any, i: number) => {
+                    return (
+                      <div
+                        style={{
+                          backgroundColor: color.hex.value,
+                          width: "60px",
+                          height: "80%",
+                          borderRadius: '10px',
+                        }}
+                        key={`${color}-${i}`}
+                      />
+                    );
+                  })}
+                </div>
+              );
+            })
+          ) : (
+            <></>
+          )}
+        </div>
+      </div>
+
+      {/* {gradientData.length ? 
+        // <>log gradients</>
+        // <ColorScheme colors={gradientData} format={format} />
+        
+          gradientData.map((gradient, i) => {
+            // console.log("Gradient", chroma(gradient[0]).rgba())
+            return <GradientColor $color1={chroma(gradient[0]).css()} $color2={chroma(gradient[1]).css()} $color3={chroma(gradient[2]).css()} key={`${gradient[0]}-${i}`}/>
+          }
+        
       ) : colorInput ? (
         <>Loading</>
       ) : (
         <></>
-      )}
+      )} */}
     </div>
   );
 };
